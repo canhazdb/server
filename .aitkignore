@@ -1,0 +1,7 @@
+tsconfig.json
+docker-compose.yml
+generateScripts.sh
+.github
+README.md
+package.json
+.aitkignore

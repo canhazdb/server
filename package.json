@@ -1,0 +1,43 @@
+{
+  "name": "canhazdb-next",
+  "type": "module",
+  "version": "8.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "start": "node dist/src",
+    "test": "c8 tsx --test tests/basic.ts",
+    "build": "tsc",
+    "build:ui": "esbuild --bundle src/modules/http-gui/frontend/index.tsx --outfile=src/modules/http-gui/frontend/dist/index.min.js --loader:.ts=ts --loader:.tsx=tsx && cp src/modules/http-gui/frontend/index.html src/modules/http-gui/frontend/dist",
+    "lint": "eslint"
+  },
+  "keywords": [],
+  "author": {
+    "email": "me@markwylde.com",
+    "name": "Mark Wylde",
+    "url": "https://github.com/markwylde"
+  },
+  "license": "AGPL-3.0-only",
+  "description": "",
+  "dependencies": {
+    "mime-types": "^2.1.35",
+    "nats": "^2.28.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "uuid": "^10.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.8.0",
+    "@types/mime-types": "^2.1.4",
+    "@types/node": "^20.14.12",
+    "@types/uuid": "^10.0.0",
+    "c8": "^10.1.2",
+    "esbuild": "^0.23.0",
+    "eslint": "^9.8.0",
+    "globals": "^15.9.0",
+    "test": "^3.3.0",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.4",
+    "typescript-eslint": "^8.0.0"
+  }
+}

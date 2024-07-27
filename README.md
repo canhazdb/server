@@ -1,6 +1,7 @@
-# CanhazDB
+<img align="left" width="130px" src="./canhazdbLogo.svg">
 
-CanhazDB is a lightweight, event-sourced database built on top of NATS JetStream. It provides a simple HTTP API for CRUD operations and uses an in-memory database with event sourcing for persistence.
+# canhazdb-server
+A lightweight, event-sourced database built on top of NATS JetStream. It provides a simple HTTP API for CRUD operations and uses an in-memory database with event sourcing for persistence.
 
 ## Features
 
@@ -19,7 +20,7 @@ CanhazDB is a lightweight, event-sourced database built on top of NATS JetStream
 
 1. Clone the repository:
    ```
-   git clone https://github.com/canhazdb/server.git
+   git clone https://github.com/canhazdb/server.git canhazdb
    cd canhazdb
    ```
 
@@ -65,18 +66,6 @@ Run the tests using:
 ```
 npm test
 ```
-
-## Project Structure
-
-- `src/`: Source code
-  - `config/`: Configuration files
-  - `createServer.ts`: Main server creation logic
-  - `index.ts`: Entry point
-- `tests/`: Test files
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
