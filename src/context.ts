@@ -9,9 +9,11 @@ export type Config = {
   /** TLS configuration */
   tls: {
     /** Path to the certificate file */
-    cert: string;
+    certPath?: string;
     /** Path to the key file */
-    key: string;
+    keyPath?: string;
+    /** Auto generate cert files if none found */
+    autoGenerate?: boolean;
   };
   /** Port number for the server */
   ports: {
@@ -58,6 +60,10 @@ export type Context = {
     /** JetStream client */
     js: JetStreamClient;
   }
+  tls: {
+    cert?: string;
+    key?: string;
+  }
   /** Functions added to this array will be executed when the server is closed */
   cleanups: Array<() => Promise<void>>;
 }
@@ -90,7 +96,8 @@ export function createContext (config: Config): Context {
     },
     // @ts-expect-error TS2739
     jetStream : {},
-    cleanups: []
+    cleanups: [],
+    tls: {}
   };
 
   return context;

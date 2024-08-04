@@ -7,8 +7,8 @@ import { Context } from '../../context.js';
 export default async function setupHttpGui(context: Context) {
   const { config } = context;
   const options = {
-    key: await fs.readFile(config.tls.key),
-    cert: await fs.readFile(config.tls.cert)
+    key: context.tls.key,
+    cert: context.tls.cert
   };
 
   const staticDir = path.join(import.meta.dirname, 'frontend/dist');

@@ -1,5 +1,4 @@
 import https from 'node:https';
-import fs from 'node:fs/promises';
 import url from 'node:url';
 import { handleDatabaseOperation } from '../events/setup.js';
 import { Context } from "../../context.js";
@@ -7,8 +6,8 @@ import { Context } from "../../context.js";
 export default async function setupHttpApi(context: Context) {
   const { config } = context;
   const options = {
-    key: await fs.readFile(config.tls.key),
-    cert: await fs.readFile(config.tls.cert)
+    key: context.tls.key,
+    cert: context.tls.cert
   };
 
   const server = https.createServer(options, async (request, response) => {

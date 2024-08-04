@@ -23,8 +23,8 @@ interface Response {
 
 async function makeRequest(options: RequestOptions, data: any = null): Promise<Response> {
   const url = `https://${options.hostname}:${options.port}${options.path}`;
-  const fetchOptions: RequestInit = { // Changed from any to RequestInit
-    method: options.method, // Explicitly set the method
+  const fetchOptions: RequestInit = {
+    method: options.method,
     headers: {
       'Content-Type': 'application/json'
     },
@@ -42,8 +42,7 @@ async function makeRequest(options: RequestOptions, data: any = null): Promise<R
 
 const testConfig: Config = {
   tls: {
-    cert: 'certs/cert.pem',
-    key: 'certs/key.pem',
+    autoGenerate: true
   },
   ports: {
     api: 3000,

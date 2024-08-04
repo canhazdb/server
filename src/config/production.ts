@@ -4,7 +4,6 @@ const config: Config = {
   tls: {
     certPath: 'certs/cert.pem',
     keyPath: 'certs/key.pem',
-    autoGenerate: true
   },
   ports: {
     api: 3000,
@@ -12,7 +11,7 @@ const config: Config = {
   },
   jetstream: {
     servers: ['nats://localhost:4222'],
-    streamName: 'canhazdb-dev',
+    streamName: 'canhazdb-prod',
     consumerName: 'consumer'
   }
 };

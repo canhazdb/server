@@ -131,6 +131,7 @@ export async function handleDatabaseOperation(context: Context, streamName: stri
 
 export default async function setup (context: Context) {
   const { config } = context;
+
   await setupNats(context);
   await ensureStream(context, config.jetstream.streamName);
   await streamEvents(context, config.jetstream.streamName);
