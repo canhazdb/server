@@ -48,11 +48,8 @@ const testConfig: Config = {
     api: 3000,
     gui: 3001
   },
-  jetstream: {
-    servers: ['nats://localhost:4222'],
-    streamName: `canhazdb-test-${Date.now()}`,
-    consumerName: `canhazdb-test-consumer-${Date.now()}`,
-  }
+  clusterId: `canhazdb-test-${Date.now()}`,
+  nodeId: `canhazdb-test-node-${Date.now()}`,
 };
 
 describe('CanhazDB Server Tests', async () => {

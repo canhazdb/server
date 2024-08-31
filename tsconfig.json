@@ -19,6 +19,6 @@
     "allowJs": true,
     "checkJs": true
   },
-  "include": ["tests/**/*", "src/**/*", "build/downloadNats.ts"],
+  "include": ["tests/**/*", "src/**/*"],
   "exclude": ["node_modules", "dist", "src/modules/http-gui/frontend/**/*"]
 }

@@ -1,66 +1,62 @@
-import { connect, StringCodec, NatsError } from "nats";
 import { v4 as uuidv4 } from 'uuid';
 import { Collection, Context } from "../../context.js";
-import { applyEvent } from "./applyEvent.js";
+import { applyEvent } from './applyEvent.js';
+import fs from 'fs';
 
 export async function getSystemCollections(context: Context): Promise<Collection[]> {
   return context.systemCollections.collections;
 }
 
-async function setupNats(context: Context) {
-  const { config, jetStream } = context;
-  jetStream.nc = await connect({ servers: config.jetstream.servers });
-  console.log("Connected to NATS");
+async function loadAndApplyEvents(context: Context, streamName: string) {
+  const filePath = `./data/${streamName}.json`;
 
-  jetStream.jsm = await jetStream.nc.jetstreamManager();
-  jetStream.js = jetStream.nc.jetstream();
-
-  context.cleanups.push(async () => {
-    await jetStream.nc.drain();
-    await jetStream.nc.close();
-  });
-}
-
-// Ensure the stream exists
-async function ensureStream(context: Context, streamName: string) {
-  const { jetStream } = context;
   try {
-    await jetStream.jsm.streams.add({ name: streamName, subjects: [`${streamName}.>`] });
-    console.log(`Stream '${streamName}' created`);
-  } catch (err) {
-    if (err instanceof NatsError && err.code !== '400') {
-      throw err;
+    const fileContent = await fs.promises.readFile(filePath, 'utf-8');
+    const events = fileContent.trim().split('\n').map(line => JSON.parse(line));
+
+    for (const event of events) {
+      applyEvent(context, event);
     }
-    console.log(`Stream '${streamName}' already exists`);
+  } catch (error) {
+    // If the file doesn't exist (ENOENT), it's not an error, just means no events to load
+    // @ts-expect-error TS18046
+    if (error.code !== 'ENOENT') {
+      throw error;
+    }
   }
 }
 
-// Stream all events from the beginning to build up the in-memory database
-async function streamEvents(context: Context, streamName: string) {
-  const { jetStream } = context;
-  const consumer = await jetStream.js.consumers.get(streamName);
-
-  const iter = await consumer.consume();
-  const sc = StringCodec();
-
-  context.cleanups.push(async () => {
-    await iter.stop();
-    await iter.close();
-  });
-
-  // We need to resolve this function so the next module can run
-  (async function() {
-    for await (const msg of iter) {
-      const event = JSON.parse(sc.decode(msg.data));
-      applyEvent(context, event);
-      msg.ack();
+async function getNextSequence(streamName: string): Promise<number> {
+  const filePath = `./data/${streamName}.json`;
+  try {
+    const stats = await fs.promises.stat(filePath);
+    if (stats.size === 0) {
+      return 1;
     }
-  })();
+    const fileContent = await fs.promises.readFile(filePath, 'utf-8');
+    const lastLine = fileContent.trim().split('\n').pop();
+    if (lastLine) {
+      const lastEvent = JSON.parse(lastLine);
+      return (lastEvent.sequence || 0) + 1;
+    }
+  } catch (error) {
+    // If the file doesn't exist (ENOENT), it's not an error, just means no events to load
+    // @ts-expect-error TS18046
+    if (error.code !== 'ENOENT') {
+      throw error;
+    }
+  }
+  return 1;
 }
 
-// Function to handle database operations
-export async function handleDatabaseOperation(context: Context, streamName: string, method: string, collection: string, documentId: string | undefined, payload: any) {
-  const { inMemoryDB, jetStream } = context;
+function isCollectionLoaded(context: Context, collection: string): boolean {
+  return context.loadedCollections && context.loadedCollections.has(collection);
+}
+
+export async function handleDatabaseOperation(context: Context, method: string, collection: string, documentId: string | undefined, payload: any) {
+  const { inMemoryDB } = context;
+
+  const streamName = context.config.clusterId + context.config.nodeId + collection;
 
   if (collection === '_haz.collections' && method === 'GET') {
     return getSystemCollections(context);
@@ -70,14 +66,13 @@ export async function handleDatabaseOperation(context: Context, streamName: stri
     return { error: 'Can not mutate system collections' };
   }
 
-  if (method === 'GET') {
-    if (!inMemoryDB[collection]) {
-      return { error: 'Collection not found' };
+  // Check if the collection has been loaded, and load it if not
+  if (!isCollectionLoaded(context, collection)) {
+    await loadAndApplyEvents(context, streamName);
+    if (!context.loadedCollections) {
+      context.loadedCollections = new Set();
     }
-    if (documentId) {
-      return inMemoryDB[collection][documentId] || { error: 'Document not found' };
-    }
-    return Object.values(inMemoryDB[collection]);
+    context.loadedCollections.add(collection);
   }
 
   if (method === 'GET') {
@@ -98,7 +93,7 @@ export async function handleDatabaseOperation(context: Context, streamName: stri
   }[method] as 'CREATE' | 'UPDATE' | 'PATCH' | 'DELETE' | undefined;
 
   if (!eventType) {
-    throw new Error('Invalid method');
+    throw new Error(`Invalid method ${method}`);
   }
 
   // Generate UUID v4 for new documents
@@ -114,25 +109,30 @@ export async function handleDatabaseOperation(context: Context, streamName: stri
     delete payload.id;
   }
 
+  const sequence = await getNextSequence(streamName);
   const event = {
     eventType,
     collection,
     documentId,
     timestamp: new Date().toISOString(),
-    payload: eventType === 'CREATE' ? { ...payload, id: documentId } : { ...payload, id: documentId }
+    payload: eventType === 'CREATE' ? { ...payload, id: documentId } : { ...payload, id: documentId },
+    sequence
   };
 
-  const subject = `${streamName}.${collection}`;
-  const sc = StringCodec();
-  const pubAck = await jetStream.js.publish(subject, sc.encode(JSON.stringify(event)));
+  await fs.promises.appendFile(`./data/${streamName}.json`, JSON.stringify(event) + '\n');
+  applyEvent(context, event);
 
-  return { success: true, message: `${eventType} operation successful`, sequence: pubAck.seq, documentId: event.documentId };
+  return {
+    success: true,
+    message: `${eventType} operation successful`,
+    sequence: sequence,
+    documentId: event.documentId
+  };
 }
 
-export default async function setup (context: Context) {
-  const { config } = context;
-
-  await setupNats(context);
-  await ensureStream(context, config.jetstream.streamName);
-  await streamEvents(context, config.jetstream.streamName);
+export async function setup(context: Context) {
+  await fs.promises.mkdir('./data', { recursive: true });
+  context.loadedCollections = new Set();
 }
+
+export default setup;

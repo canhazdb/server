@@ -9,11 +9,8 @@ const config: Config = {
     api: 3000,
     gui: 3001
   },
-  jetstream: {
-    servers: ['nats://localhost:4222'],
-    streamName: 'canhazdb-prod',
-    consumerName: 'consumer'
-  }
+  clusterId: 'canhazdb-prod',
+  nodeId: 'canhazdb-prod-1',
 };
 
 export default config;

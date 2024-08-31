@@ -1,5 +1,3 @@
-import { JetStreamClient, JetStreamManager, NatsConnection } from "nats";
-
 export type ConfigPortTypes = 'api' | 'gui';
 
 /**
@@ -19,15 +17,10 @@ export type Config = {
   ports: {
     [key in ConfigPortTypes]: number;
   },
-  /** JetStream configuration */
-  jetstream: {
-    /** Array of JetStream server addresses */
-    servers: string[];
-    /** Name of the JetStream stream */
-    streamName: string;
-    /** Name of the JetStream consumer */
-    consumerName: string;
-  };
+  /** A uuid to identify the cluster */
+  clusterId: string;
+  /** A uuid to identify the node */
+  nodeId: string;
 };
 
 /**
@@ -51,21 +44,13 @@ export type Context = {
   systemCollections: {
     collections: Collection[];
   };
-  /** JetStream-related objects */
-  jetStream: {
-    /** NATS connection */
-    nc: NatsConnection;
-    /** JetStream manager */
-    jsm: JetStreamManager;
-    /** JetStream client */
-    js: JetStreamClient;
-  }
   tls: {
     cert?: string;
     key?: string;
   }
   /** Functions added to this array will be executed when the server is closed */
   cleanups: Array<() => Promise<void>>;
+  loadedCollections: Set<string>;
 }
 
 /**
@@ -94,10 +79,9 @@ export function createContext (config: Config): Context {
     systemCollections: {
       collections: []
     },
-    // @ts-expect-error TS2739
-    jetStream : {},
     cleanups: [],
-    tls: {}
+    tls: {},
+    loadedCollections: new Set<string>()
   };
 
   return context;

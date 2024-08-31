@@ -46,7 +46,7 @@ export default async function setupHttpApi(context: Context) {
           delete payload.id;
         }
 
-        const result = await handleDatabaseOperation(context, config.jetstream.streamName, request.method || 'GET', collection, documentId, payload);
+        const result = await handleDatabaseOperation(context, request.method || 'GET', collection, documentId, payload);
         response.writeHead(200, { 'Content-Type': 'application/json' });
         response.end(JSON.stringify(result));
       } catch (error) {
