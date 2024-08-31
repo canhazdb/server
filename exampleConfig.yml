@@ -1,0 +1,16 @@
+tls:
+  // Path to the certificate file
+  certPath: ./cert.pem
+  // Path to the key file
+  keyPath: ./key.pem
+  // Generate a self signed certificate if no certificates exists at the certPath and keyPath
+  autoGenerate: true
+
+// Port number for the server
+port: 8600
+
+// A uuid to identify the cluster
+clusterId: example-cluster
+
+// A uuid to identify the node
+nodeId: example-cluster-1
